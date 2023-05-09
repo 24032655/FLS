@@ -1,0 +1,84 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+<head style="text-align: center;">
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+	<style>
+		.btn-row {
+		  display: flex;          
+		  flex-direction: column; /* 将主轴方向设置为纵向 */
+		  justify-content: center; /* 设置在纵向上居中 */
+		}
+
+		.btn-row button {
+		  width: 100px;             /* 设置宽度 */
+		  height: 50px;            /* 设置每个按钮高度 */
+		  margin: 1000px;             /* 设置每个按钮之间的间距 */
+		  align-self: center;       /* 将每个按钮设置为在纵向方向上居中 */
+		}
+		.container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+		}
+	</style>
+      <h1 style="text-align: center; font-size: 14px;">联邦学习监管系统演示</h1>
+</head>
+<body>
+	<div class="container">
+		<div class="btn-row">
+				<!-- The buttons -->
+			<input id="capture-submit" type="button" value="capture">
+			<input id="capture-stop" type="button" value="capture-stop">
+			<input id="chat-message-submit" type="button" value="analyze">
+			<input id="chat-message-stop" type="button" value="analyze-stop">
+			<input id="chat-message-reload" type="button" value="refresh"><br>
+		</div>
+		<br><textarea id="chat-log" cols="100" rows="25" onload="clearTextArea()"></textarea><br>
+	</div>
+
+    <script>
+		
+		window.onbeforeunload = function() {
+		const log = document.querySelector('#chat-log');
+		log.value = '';
+		};
+		
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/chat/'
+        );
+
+		document.querySelector('#chat-message-submit').onclick = function(e) {
+			const messageInputDom = document.querySelector('#chat-message-submit');
+			const message = messageInputDom.value;
+			chatSocket.send(JSON.stringify({
+			'message': message
+			}));
+		};
+		
+		chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+			$('#chat-log').scrollTop = $('#chat-log').scrollHeight;	
+		};
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+			const log = document.querySelector('#chat-log');
+			log.value = '';
+			window.onbeforeunload = null;
+        };
+		
+		var reload_butt = document.getElementById("chat-message-reload");
+		reload_butt.addEventListener("click", function() {
+			location.reload();
+		});
+			
+
+    </script>
+</body>
+</html>
